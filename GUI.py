@@ -15,7 +15,7 @@ frame = tk.Frame(root)
 root.title("nCrypt GUI")
 root.geometry("500x220")
 #root.overrideredirect(1)  #not gonna remove window border
-root.iconphoto(False, tk.PhotoImage(file=f'{cwd}\icon_TEMP.png'))
+root.iconphoto(False, tk.PhotoImage(file=f'{cwd}/icon_TEMP.png'))
 global decryptVariable
 decryptVariable = tk.StringVar(value="Decrypt")
 
@@ -41,7 +41,7 @@ def Dragging(event):
 global topMost 
 topMost = False
 root.attributes('-topmost', topMost)
-root.geometry("500x220+500+300")
+root.geometry("550x250+500+300")
 root.bind('<Button-1>', SaveLastClickPos)
 #root.bind('<B1-Motion>', Dragging)
 
@@ -115,6 +115,20 @@ decding = ""
 typeVar = StringVar(root)
 typeVar.set("base64")  # default value
 #notified = False
+
+def set_all_normal():
+    decode["state"] = ACTIVE
+    dec1["state"] = NORMAL
+    enc1["state"] = NORMAL
+
+def disable_entry():
+    enc1["state"] = DISABLED
+    dec1["state"] = DISABLED
+
+def disable_decrypt():
+    decode["state"] = DISABLED
+    dec1["state"] = DISABLED
+
 def notifTrue():
     notified = True
 def changeEncType(options):
@@ -122,35 +136,35 @@ def changeEncType(options):
     encType = typeVar.get()
     #print(encType)
     if encType == "base64":
-        decode["state"] = ACTIVE
-        dec1["state"] = NORMAL
+        enc1.delete(0, "end")
+        dec1.delete(0, "end")
+        set_all_normal()
         encKey.grid_forget()
         encKeyLabel.grid_forget()
         encode.grid(column=0, row=4, pady=2)
     if encType == "hash":
+        set_all_normal()
+        enc1.delete(0, "end")
         encKey.grid_forget()
         encKeyLabel.grid_forget()
         encode.grid(column=0, row=4, pady=2)
-        if notified == True:
-            show_notif("Hash", "Can't Decrypt Hash")
-            notifTrue()
-        elif notified == False:
-            #print("true")
-            pass
-        else:
-            raise Exception("Variable notified must be true or false")
+        
+        show_notif("Hash", "Can't Decrypt Hash")
         
         decode["state"] = DISABLED
         dec1["state"] = DISABLED
     if encType == "cryptocode":
-        decode["state"] = ACTIVE
-        dec1["state"] = NORMAL
+        enc1.delete(0, "end")
+        dec1.delete(0, "end")
+        set_all_normal()
         encode.grid(column=0, row=4, pady=2)
         encKey.grid(row=14, column=1, pady=2)
         encKeyLabel.grid(row=13, column=1)
     if encType == "file encrypt":
-        decode["state"] = ACTIVE
-        dec1["state"] = NORMAL
+        enc1.delete(0, "end")
+        dec1.delete(0, "end")
+        set_all_normal()
+        disable_entry()
         encKey.grid(row=14, column=1, pady=2)
         encKeyLabel.grid(row=13, column=1)
         
@@ -177,7 +191,10 @@ encKeyLabel.grid_forget()
 
 import webbrowser
 
-def show_notif(notification):
+def show_notif(title = None, notification=""):
+    if not title == None:
+      title = title.split(':')[0]
+      notification = f"{title}:\n"+notification
     middle_text.config(text = notification)
     root.after(3000, lambda: middle_text.config(text = ""))
 
@@ -200,7 +217,7 @@ def enc():
     
     if not typeVar.get() == "base64" and not typeVar.get() == "hash":
         if key == "":
-            show_notif("Error: No Key")
+            show_notif("Error:","No Key")
             return
     if typeVar.get() == "base64":
         
@@ -245,7 +262,7 @@ def dec():
     key = encKey.get()
     if not typeVar.get() == "base64" and not typeVar.get() == "hash":
         if key == "":
-            show_notif("Error: No Key")
+            show_notif("Error:", "No Key")
             return
     inp2 = dec1.get()
     if typeVar.get() == "base64":
@@ -260,9 +277,15 @@ def dec():
         try:
             key = encKey.get()
             out2 = nc.cryptoCode.decrypt(inp2, key)
-            dec1.delete(0, "end")
-            dec1.insert(0, out2)
+            if out2 == False:
+              show_notif("Unable to decrypt", "Wrong Password")
+              dec1.delete(0, "end")
+            else:
+              dec1.delete(0, "end")
+              dec1.insert(0, out2)
             decryptVariable.set("Decrypt")
+
+       
         except:
             decryptVariable.set("Can't Decrypt Plain Text!")
     elif typeVar.get() == "file encrypt":
@@ -276,9 +299,10 @@ def dec():
                 f"File {inpFile} decrypted.\nOutput file is {inpFile[:-4]}.\nDeleting {inpFile} in 5 seconds...")
             root.after(5000, lambda: os.remove(inpFile))
         except ValueError:
-            show_notif("Unable to decrypt: Wrong Password")
+            show_notif("Unable to decrypt:", "Wrong Password")
         except:
-            pass
+            return
+            
         #    print(e)
         #    print("No File Given")
     

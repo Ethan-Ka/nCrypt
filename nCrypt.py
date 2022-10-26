@@ -36,10 +36,12 @@ class nCrypt:
 
   class cryptoCode:
     def encrypt(input, key):
+      key = nCrypt.base64.encrypt(key)
       finalOutput = cryptocode.encrypt(input, key)
       return finalOutput  # output to variable
 
     def decrypt(input, key):
+        key = nCrypt.base64.encrypt(key)
         output = cryptocode.decrypt(
             input, key)
 
